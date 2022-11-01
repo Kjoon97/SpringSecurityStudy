@@ -20,4 +20,5 @@ public class PrincipalDetailsService implements UserDetailsService {
         User userEntity = userRepository.findByUsername(username);
         return new PrincipalDetails(userEntity);  //-> 리턴되면 시큐리티세션(내부 Authentication객체(내부 UserDetails객체))로 됨.
     }
+    //해당 매소드 종료시 @AuthenticationPrincipal 이 생성된다.
 }

@@ -30,6 +30,19 @@ public class User {
     private String email;
     private String role; //ROLE_USER, ROLE_ADMIN
 
+    private String provider;        //Oauth2 로그인한 사이트 이름
+    private String providerId;      //Oauth2 로그인한 사이트 sub ID
+
     @CreationTimestamp
     private Timestamp createDate;
+
+    @Builder
+    public User(String username, String password, String email, String role, String provider, String providerId) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.provider = provider;
+        this.providerId = providerId;
+    }
 }
