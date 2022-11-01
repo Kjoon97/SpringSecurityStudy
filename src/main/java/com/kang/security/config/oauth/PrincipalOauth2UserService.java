@@ -2,6 +2,9 @@ package com.kang.security.config.oauth;
 
 
 import com.kang.security.config.auth.PrincipalDetails;
+import com.kang.security.config.oauth.provider.FacebookUserInfo;
+import com.kang.security.config.oauth.provider.GoogleUserInfo;
+import com.kang.security.config.oauth.provider.OAuth2UserInfo;
 import com.kang.security.model.User;
 import com.kang.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,7 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
 
-    //Oauth2 로그인 완료 후 후처리 - 구글로 받은 userRequest 데이터 후처리.
+    //Oauth2 로그인 완료 후 후처리 - 구글,페이스북으로 받은 userRequest 데이터 후처리.
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException{
         System.out.println("ClientRegistration = " + userRequest.getClientRegistration()); //Registration ID로 어떤 Oauth로 로그인했는지 확인 가능(구글,페이스북)
@@ -30,14 +33,24 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User= super.loadUser(userRequest);
         System.out.println("Attributes = " + oAuth2User.getAttributes());
 
-        String provider = userRequest.getClientRegistration().getRegistrationId();   //google
-        String providerID = (String) oAuth2User.getAttributes().get("sub");          //google에서의 회원 primary key
-        String email = (String) oAuth2User.getAttributes().get("email");
-        String username = provider+"_"+providerID;     //google_123212345245245
+        OAuth2UserInfo oAuth2UserInfo=null;
+        if(userRequest.getClientRegistration().getRegistrationId().equals("google")){
+            oAuth2UserInfo = new GoogleUserInfo(oAuth2User.getAttributes());
+        }else if(userRequest.getClientRegistration().getRegistrationId().equals("facebook")){
+            oAuth2UserInfo = new FacebookUserInfo(oAuth2User.getAttributes());
+        }else{
+            System.out.println("우리는 구글과 페이스북만 지원해요요");
+        }
+
+        String provider = oAuth2UserInfo.getProvider();                               //ex) google,facebook
+        String providerID = oAuth2UserInfo.getProviderId();
+        String email = oAuth2UserInfo.getEmail();
+        String username = provider+"_"+providerID;     // ex) google_123212345245245
         String role ="ROLE_USER";
 
         User userEntity = userRepository.findByUsername(username);
         if (userEntity==null){
+            System.out.println("첫 로그인입니다. 당신은 회원가입되었습니다..");
             userEntity = User.builder()
                     .username(username)
                     .email(email)
@@ -46,6 +59,8 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
                     .providerId(providerID)
                     .build();
             userRepository.save(userEntity);
+        }else{
+            System.out.println("로그인을 이미 한적이 있습니다. 당신은 자동 로그인됩니다.");
         }
 
         //회원가입 강제 진행.
