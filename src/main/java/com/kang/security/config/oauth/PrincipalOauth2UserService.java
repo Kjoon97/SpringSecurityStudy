@@ -4,6 +4,7 @@ package com.kang.security.config.oauth;
 import com.kang.security.config.auth.PrincipalDetails;
 import com.kang.security.config.oauth.provider.FacebookUserInfo;
 import com.kang.security.config.oauth.provider.GoogleUserInfo;
+import com.kang.security.config.oauth.provider.NaverUserInfo;
 import com.kang.security.config.oauth.provider.OAuth2UserInfo;
 import com.kang.security.model.User;
 import com.kang.security.repository.UserRepository;
@@ -38,8 +39,10 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
             oAuth2UserInfo = new GoogleUserInfo(oAuth2User.getAttributes());
         }else if(userRequest.getClientRegistration().getRegistrationId().equals("facebook")){
             oAuth2UserInfo = new FacebookUserInfo(oAuth2User.getAttributes());
+        }else if(userRequest.getClientRegistration().getRegistrationId().equals("naver")){
+            oAuth2UserInfo = new NaverUserInfo((Map)oAuth2User.getAttributes().get("response"));
         }else{
-            System.out.println("우리는 구글과 페이스북만 지원해요요");
+            System.out.println("우리는 구글과 페이스북, 네이버만 지원해요");
         }
 
         String provider = oAuth2UserInfo.getProvider();                               //ex) google,facebook
@@ -50,7 +53,7 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
 
         User userEntity = userRepository.findByUsername(username);
         if (userEntity==null){
-            System.out.println("첫 로그인입니다. 당신은 회원가입되었습니다..");
+            System.out.println("첫 로그인입니다");
             userEntity = User.builder()
                     .username(username)
                     .email(email)
